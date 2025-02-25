@@ -1,17 +1,21 @@
-import { useState } from "react";
+// import { useState } from "react";
 import Main from "./component/Main";
 import TodoForm from "./component/TodoForm";
+// import GetApi from "./component/GetApi";
 const App = () => {
 
-//   const[todos ,setTodos]=useState([]);
+  // const[todos ,setTodos]=useState([]);
  
 
     return (
      
       <div className= "App">
        
-       <Main/>
-       <TodoForm/>
+        <Main/>
+     <TodoForm/> 
+
+{/* <GetApi/> */}
+
       </div>
     );  };
   

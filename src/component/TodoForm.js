@@ -1,93 +1,182 @@
-import React, { useState,useEffect } from "react";
-import { MdEditSquare } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
+import React, { useState, useEffect } from "react";
+import { RiDeleteBin6Line } from "react-icons/ri";
+import { MdEdit } from "react-icons/md";
+import { FiSun, FiMoon } from "react-icons/fi"; 
 
 const TodoForm = () => {
-  const [initial, setInitial] = useState(""); 
+  const [initial, setInitial] = useState("");
   const [data, setData] = useState([]);
-  const [editIndex, setEditIndex] = useState(null); 
+  const [editIndex, setEditIndex] = useState(null);
+  const [selectedText, setSelectedText] = useState(null);
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
+  
   useEffect(() => {
     const savedData = JSON.parse(localStorage.getItem("todos")) || [];
     setData(savedData);
   }, []);
 
-  // Update localStorage whenever the data changes
+  
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(data));
   }, [data]);
-  
+
+
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
   const getInput = (e) => {
     setInitial(e.target.value);
   };
 
-  
-  const handleTask = () => {
-    if (editIndex !== null) {
-      
-      const updatedData = data.map((item, index) =>
-        index === editIndex ? initial : item
-      );
-      setData(updatedData);
-      setEditIndex(null); 
-    } else {
-      
-      setData([...data, initial]);
-    }
-    setInitial(""); 
+  const openModal = (text) => {
+    setSelectedText(text);
   };
 
+  const handleTask = () => {
+    if (initial.trim() === "") return;
+
+    if (editIndex !== null) {
+      const updatedData = data.map((item, index) =>
+        index === editIndex ? { ...item, text: initial } : item
+      );
+      setData(updatedData);
+      setEditIndex(null);
+    } else {
+      setData([...data, { text: initial, completed: false }]);
+    }
+    setInitial("");
+  };
 
   const deleteTask = (index) => {
     const filteredData = data.filter((_, id) => id !== index);
     setData(filteredData);
   };
 
-
   const editTask = (index) => {
-    setInitial(data[index]); 
-    setEditIndex(index); 
+    setInitial(data[index].text);
+    setEditIndex(index);
+  };
+
+  const clearAllTasks = () => {
+    setData([]);
+    localStorage.removeItem("todos");
+  };
+
+  const handleCheckboxChange = (index) => {
+    const updatedData = data.map((item, i) =>
+      i === index ? { ...item, completed: !item.completed } : item
+    );
+    setData(updatedData);
   };
 
   return (
-    <>
-      <div className="bg-gray-950 mt-12 h-72 w-96 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold border rounded-lg border-transparent">
-        <input
-          type="text"
-          onChange={getInput}
-          className="mt-3 ml-3 h-10 w-72 border-rounded-xl font-normal border-r-white bg-white text-black border rounded-xl"
-          placeholder="Enter Your ToDo"
-          value={initial}
-        />
-        <button
-          type="button"
-          className="ml-2 h-10 w-18 text-xl bg-gradient-to-r from-blue-700 to-purple-800 border rounded-xl"
-          onClick={handleTask}
-        >
-          {editIndex !== null ? "Update" : "Add"}
-        </button>
-        <div>
+    <div className={`flex flex-col justify-center items-center min-h-screen transition-all duration-300 ${
+      theme === "dark" ? "bg-gray-900 text-white" : "bg-yellow-50 text-black"
+    }`}>
+      
+    
+      <button
+        className="absolute top-4 right-4 p-2 bg-gray-700 text-white rounded-full shadow-md hover:bg-gray-600 transition"
+        onClick={toggleTheme}
+      >
+        {theme === "light" ? <FiMoon size={24} /> : <FiSun size={24} />}
+      </button>
+
+      <div className={`shadow-2xl rounded-lg p-6 w-full max-w-md transition-all duration-300 ${
+        theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"
+      }`}>
+        
+        {selectedText && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center px-4">
+            <div className={`p-6 rounded-lg max-w-md w-full max-h-[80vh] overflow-auto ${
+              theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"
+            }`}>
+              <p className="break-words whitespace-pre-wrap">{selectedText}</p>
+              <button
+                className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+                onClick={() => setSelectedText(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        <h2 className="text-2xl font-semibold text-center mb-4">Todo List</h2>
+
+        <div className="flex space-x-3">
+          <input
+            type="text"
+            onChange={getInput}
+            className={`flex-1 px-4 py-2 bg-gray-100 rounded-md transition  ${
+              theme === "dark" ? "bg-gray-700 text-white border-gray-500" : "text-black"
+            }`}
+            placeholder="Enter Your Task"
+            value={initial}
+          />
+          <button
+            type="button"
+            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition"
+            onClick={handleTask}
+          >
+            {editIndex !== null ? "Update" : "Add"}
+          </button>
+        </div>
+
+        <div className="mt-4 space-y-2">
           {data.map((curVal, index) => (
             <div
               key={index}
-              className="text-white text-xl ml-3 mr-3 justify-between flex font-normal bg-gradient-to-r from-blue-700 to-purple-800 mt-4 border rounded-l m-4 h-8"
+              className={`flex justify-between items-center px-4 py-2 rounded-lg shadow-sm transition ${
+                curVal.completed ? "bg-green-200 dark:bg-green-700" : theme === "dark" ? "bg-gray-700 text-white" : "bg-gray-100 "
+              }`}
             >
-              <p className="ml-2">{curVal}</p>
-              <MdEditSquare
-                className="text-white cursor-pointer"
-                size={28}
-                onClick={() => editTask(index)}
+              <input
+                type="checkbox"
+                checked={curVal.completed}
+                onChange={() => handleCheckboxChange(index)}
+                className="cursor-pointer"
               />
-              <MdDelete
-                className="text-white cursor-pointer "
-                size={28}
-                onClick={() => deleteTask(index)}
-              />
+              <p
+                className={`flex-1 truncate overflow-hidden break-words cursor-pointer ${
+                  curVal.completed ? "line-through text-gray-500" : "light:text-black dark:text-white"
+                }`}
+                onClick={() => openModal(curVal.text)}
+              >
+                {curVal.text}
+              </p>
+
+              <div className="flex space-x-3">
+                <MdEdit
+                  className="cursor-pointer text-blue-600"
+                  size={24}
+                  onClick={() => editTask(index)}
+                />
+                <RiDeleteBin6Line
+                  className="cursor-pointer text-red-500 hover:text-red-400"
+                  size={24}
+                  onClick={() => deleteTask(index)}
+                />
+              </div>
             </div>
           ))}
         </div>
       </div>
-    </>
+
+      <button
+        className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg w-auto"
+        onClick={clearAllTasks}
+      >
+        Clear All
+      </button>
+    </div>
   );
 };
 
